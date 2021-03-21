@@ -105,6 +105,14 @@
               </p>
             </a>
           </li>
+          <li class="nav-item has-treeview">
+            <a href="{{ url('/payment') }}" class="nav-link {{ (Request::segment(1) === 'shop') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-dollar-sign"></i>
+              <p>
+                Payment
+              </p>
+            </a>
+          </li>
         </ul>
       </nav>
       <!-- /.sidebar-menu -->

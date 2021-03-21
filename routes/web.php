@@ -18,6 +18,8 @@ Route::get('/login', 'Auth\LoginController@showLoginForm');
 Route::post('/login', 'Auth\LoginController@login');
 Route::post('/logout', 'Auth\LoginController@logout');
 
+Route::get('/abia_ussd', 'USSDController@index');
+
 Route::group(['middleware' => ['auth']], function() {
 	Route::get('/home', 'HomeController@index');
 	
@@ -28,4 +30,7 @@ Route::group(['middleware' => ['auth']], function() {
 
 	Route::get('/agent/grid', 'AgentController@getAgentGrid');
 	Route::get('/agent', 'AgentController@getAgent');
+	
+	Route::get('/payment/grid', 'PaymentController@getPaymentGrid');
+	Route::get('/payment', 'PaymentController@getPayment');
 });

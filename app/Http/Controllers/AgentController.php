@@ -9,6 +9,7 @@ use Session;
 use Redirect;
 use App\Models\Driver;
 use App\Models\Agent;
+use App\Models\Payment;
 use DB;
 
 class AgentController extends Controller
@@ -69,14 +70,26 @@ class AgentController extends Controller
 			
 			$db_Agent = new Agent;
 			$db_Agent->name = $Row[0];
+			$db_Agent->msisdn = $Row[2];
 			$db_Agent->email = $Row[3];
 			$db_Agent->address = $Row[4];
 			$db_Agent->type = $Row[5];
 			$db_Agent->save();
 			
-			$accountNumber = $this->monnifyReserveAccount("LIVE", $Row[2], $Row[0], $Row[3], $Row[5]);
-			
-			if($accountNumber == "0")
+			$accountCreatedResponse = $this->monnifyReserveAccount("LIVE", $Row[2], $Row[0], $Row[3], $Row[5]);
+			$responseData = json_decode($accountCreatedResponse);
+			if($responseData->requestSuccessful)
+			{
+				$message = "Your monnify account has been created successfully";
+				file_get_contents("https://app.multitexter.com/v2/app/sms?email=tech@iyconsoft.com&message=".urlencode($message)."&recipients=".$Row[2]."&forcednd=1&password=sayntt123&sender_name=SELFSERVE");
+				$updatedRows[] = $Row;
+				$db_Driver->accountno = $responseData->responseBody->accountNumber;
+				$db_Driver->save();
+				$db_Agent->accountcreatedresponse = $accountCreatedResponse;
+				$db_Agent->accountno = $responseData->responseBody->accountNumber;
+				$db_Agent->save();
+			}
+			else
 			{
 				Session::flash('error_message', "Create account fail");
 				Session::flash('updatedRows', $updatedRows);
@@ -84,16 +97,8 @@ class AgentController extends Controller
 				$db_Agent->delete();
 				return Redirect::back();
 			}
-			else
-			{
-				$message = "Your monnify account has been created successfully";
-				file_get_contents("https://app.multitexter.com/v2/app/sms?email=tech@iyconsoft.com&message=".urlencode($message)."&recipients=".$Row[2]."&forcednd=1&password=sayntt123&sender_name=SELFSERVE");
-				$updatedRows[] = $Row;
-				$db_Driver->accountno = $accountNumber;
-				$db_Driver->save();
-				$db_Agent->accountno = $accountNumber;
-				$db_Agent->save();
-			}
+			
+			
 			
 			///print_r($db_Driver);
 			///print_r($db_Agent);
@@ -141,7 +146,7 @@ class AgentController extends Controller
 		}
 		
 		$accountname = strtoupper($fullname);
-		$data = json_encode(array("accountReference" => $msisdn, "accountName"  => $accountname, "currencyCode" => "NGN", "contractCode" => $contractCode, "customerEmail" => $customerEmail, "customerName" => $fullname, "incomeSplitConfig" => $incomeSplitconfig));
+		$data = json_encode(array("accountReference" => 'z1012'.$msisdn, "accountName"  => $accountname, "currencyCode" => "NGN", "contractCode" => $contractCode, "customerEmail" => $customerEmail, "customerName" => $fullname, "incomeSplitConfig" => $incomeSplitconfig));
 		
 		
 		
@@ -187,17 +192,58 @@ class AgentController extends Controller
 		$response = curl_exec($curl);
 		curl_close($curl);
 		
-		$responseData = json_decode($response);
-		if($responseData->requestSuccessful)
-		{
-			return $responseData->responseBody->accountNumber;
-		}
-		else
-		{
-			return 0;
-			//print_r($data);
-			//dd($responseData);
-		}
+		return $response;
 	}
 	
+	function MonnifyCallback(Request $request)
+	{
+		$json = (file_get_contents('php://input'));
+		$decodeData = json_decode($json);
+				
+		$transactionReference = explode("|",$decodeData->transactionReference);
+		$message = "Reciept:\nDate: ".$decodeData->paidOn."\nRef: ".$decodeData->transactionReference."\nPayer: ".$decodeData->accountDetails->accountName."\nAmount Paid: N".$decodeData->totalPayable."\nID: ".$transactionReference[2]."\nDial *8014*99# to confirm payments";
+		
+		$info_Agent = Agent::Where('msisdn',$decodeData->product->reference)->First();
+		$db_payment = new Payment;
+		$db_payment->userid = $info_Agent->id;
+		$db_payment->paymentref = $decodeData->paymentReference;
+		$db_payment->transactionreference = $decodeData->transactionReference;
+		$db_payment->amountPaid =  $decodeData->amountPaid;
+		$db_payment->totalPayable =  $decodeData->totalPayable;
+		$db_payment->settlementAmount =  $decodeData->settlementAmount;
+		$db_payment->paidon =  $decodeData->paidOn;
+		$db_payment->paymentmethod =  $decodeData->paymentMethod;
+		$db_payment->paymentstatus =  $decodeData->paymentStatus;
+		$db_payment->datecreated = date('Y-m-d');
+		$db_payment->request_dump = $json;
+		$db_payment->channel = 'Monnify';
+		//$db_payment->save();
+		
+		
+		//IBRIS
+		$data = '{"paymentGatewayProvider": "lyconsoft","paymentProviderNotificationLogId": "11123","paymentProviderReferenceNumber": "'.$decodeData->paymentReference.'","paymentDate": "'.$decodeData->paidOn.'","paymentProviderCustomerName": "'.$decodeData->accountDetails->accountName.'","paymentProviderCustomerPhoneNumber": "'.$decodeData->product->reference.'","paymentProviderCustomerReference": "'.$decodeData->product->reference.'","paymentProviderChannel": "ussd","totalAmountInKobo": '.$decodeData->totalPayable.',"paymentLineItem": [{"amountPaidInKobo": '.$decodeData->totalPayable.',"paymentAgencyCode": "20008001","paymentRevenueCode": "12040275"}],"taxPayerIdentificationNumber": "'.$decodeData->product->reference.'","taxYear": "2021"}';
+		
+		echo $hashed = hash("sha512", $data.'7vczyovkpjD+co6yW9OfSUW8fTN8f4CP2Hc/JHm6Wlk=');
+		dd($data);
+		$curl = curl_init();
+		curl_setopt_array($curl, array(
+		CURLOPT_URL => 'http://ics3staging.abiairs.gov.ng/assessment-api/api/vendor/payment/notification',
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_ENCODING => "",
+		CURLOPT_MAXREDIRS => 10,
+		CURLOPT_TIMEOUT => 0,
+		CURLOPT_FOLLOWLOCATION => true,
+		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		CURLOPT_CUSTOMREQUEST => "POST",
+		CURLOPT_POSTFIELDS => $data,
+		CURLOPT_HTTPHEADER => array(
+				"vendorCode: ACCT0000013435",
+				"hash:" . $hashed
+			),
+		));
+		$response = curl_exec($curl);
+		curl_close($curl);
+		$responseData = json_decode($response);
+		dd($responseData);
+	}
 }

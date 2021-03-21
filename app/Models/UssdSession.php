@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class UserSession extends Model
+class UssdSession extends Model
 {
-    protected $table = 'user_session';
+    protected $table = 'ussd_session';
 	// //primary key
-	public $primarykey = 'id';
+	public $primaryKey = 'msisdn';
 	// //timestamps
 	public $timestamps = false;
 	
