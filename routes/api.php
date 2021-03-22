@@ -14,4 +14,4 @@ use Illuminate\Http\Request;
 */
 
 
-Route::post('/monnify_callback', 'AgentController@MonnifyCallback');
+Route::post('api/monnify_callback', 'AgentController@MonnifyCallback');

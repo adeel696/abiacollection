@@ -32,6 +32,7 @@
             <thead>
             <tr>
                 <th>Name</th>
+				<th>Msisdn</th>
                 <th>Email</th>
                 <th>Address</th>
                 <th>Account No</th>
@@ -57,6 +58,7 @@
 <script type="text/javascript">
     var columns = [
 			{ data: 'name', name: 'name' },
+			{ data: 'msisdn', name: 'msisdn' },
 			{ data: 'email', name: 'email' },
 			{ data: 'address', name: 'address' },
 			{ data: 'accountno', name: 'accountno' },

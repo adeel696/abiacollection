@@ -80,11 +80,13 @@ class AgentController extends Controller
 			$responseData = json_decode($accountCreatedResponse);
 			if($responseData->requestSuccessful)
 			{
-				$message = "Your monnify account has been created successfully";
+				$message = "Dear ".$Row[0].",\nYour Agent account number is ".$responseData->responseBody->accountNumber." in Sterling Bank.\nUse USSD, POS or Mobile App to pay for your Ticket Order. Dial 801499# to check payment.";
 				file_get_contents("https://app.multitexter.com/v2/app/sms?email=tech@iyconsoft.com&message=".urlencode($message)."&recipients=".$Row[2]."&forcednd=1&password=sayntt123&sender_name=SELFSERVE");
 				$updatedRows[] = $Row;
+
 				$db_Driver->accountno = $responseData->responseBody->accountNumber;
 				$db_Driver->save();
+
 				$db_Agent->accountcreatedresponse = $accountCreatedResponse;
 				$db_Agent->accountno = $responseData->responseBody->accountNumber;
 				$db_Agent->save();
@@ -146,7 +148,7 @@ class AgentController extends Controller
 		}
 		
 		$accountname = strtoupper($fullname);
-		$data = json_encode(array("accountReference" => 'z1012'.$msisdn, "accountName"  => $accountname, "currencyCode" => "NGN", "contractCode" => $contractCode, "customerEmail" => $customerEmail, "customerName" => $fullname, "incomeSplitConfig" => $incomeSplitconfig));
+		$data = json_encode(array("accountReference" => $msisdn, "accountName"  => $accountname, "currencyCode" => "NGN", "contractCode" => $contractCode, "customerEmail" => $customerEmail, "customerName" => $fullname, "incomeSplitConfig" => $incomeSplitconfig));
 		
 		
 		
@@ -190,6 +192,7 @@ class AgentController extends Controller
 			),
 		));
 		$response = curl_exec($curl);
+		\Log::info('monnifyReserveAccount: '.$response);
 		curl_close($curl);
 		
 		return $response;
@@ -199,9 +202,12 @@ class AgentController extends Controller
 	{
 		$json = (file_get_contents('php://input'));
 		$decodeData = json_decode($json);
+
+		\Log::info('MonnifyCallback: '.$json);
 				
 		$transactionReference = explode("|",$decodeData->transactionReference);
 		$message = "Reciept:\nDate: ".$decodeData->paidOn."\nRef: ".$decodeData->transactionReference."\nPayer: ".$decodeData->accountDetails->accountName."\nAmount Paid: N".$decodeData->totalPayable."\nID: ".$transactionReference[2]."\nDial *8014*99# to confirm payments";
+		file_get_contents("https://app.multitexter.com/v2/app/sms?email=tech@iyconsoft.com&message=".urlencode($message)."&recipients=".$decodeData->product->reference."&forcednd=1&password=sayntt123&sender_name=SELFSERVE");
 		
 		$info_Agent = Agent::Where('msisdn',$decodeData->product->reference)->First();
 		$db_payment = new Payment;
@@ -217,14 +223,14 @@ class AgentController extends Controller
 		$db_payment->datecreated = date('Y-m-d');
 		$db_payment->request_dump = $json;
 		$db_payment->channel = 'Monnify';
-		//$db_payment->save();
+		$db_payment->save();
 		
 		
 		//IBRIS
-		$data = '{"paymentGatewayProvider": "lyconsoft","paymentProviderNotificationLogId": "11123","paymentProviderReferenceNumber": "'.$decodeData->paymentReference.'","paymentDate": "'.$decodeData->paidOn.'","paymentProviderCustomerName": "'.$decodeData->accountDetails->accountName.'","paymentProviderCustomerPhoneNumber": "'.$decodeData->product->reference.'","paymentProviderCustomerReference": "'.$decodeData->product->reference.'","paymentProviderChannel": "ussd","totalAmountInKobo": '.$decodeData->totalPayable.',"paymentLineItem": [{"amountPaidInKobo": '.$decodeData->totalPayable.',"paymentAgencyCode": "20008001","paymentRevenueCode": "12040275"}],"taxPayerIdentificationNumber": "'.$decodeData->product->reference.'","taxYear": "2021"}';
+		/*$data = '{"paymentGatewayProvider": "lyconsoft","paymentProviderNotificationLogId": "11123","paymentProviderReferenceNumber": "'.$decodeData->paymentReference.'","paymentDate": "'.$decodeData->paidOn.'","paymentProviderCustomerName": "'.$decodeData->accountDetails->accountName.'","paymentProviderCustomerPhoneNumber": "'.$decodeData->product->reference.'","paymentProviderCustomerReference": "'.$decodeData->product->reference.'","paymentProviderChannel": "ussd","totalAmountInKobo": '.$decodeData->totalPayable.',"paymentLineItem": [{"amountPaidInKobo": '.$decodeData->totalPayable.',"paymentAgencyCode": "20008001","paymentRevenueCode": "12040275"}],"taxPayerIdentificationNumber": "'.$decodeData->product->reference.'","taxYear": "2021"}';
 		
-		echo $hashed = hash("sha512", $data.'7vczyovkpjD+co6yW9OfSUW8fTN8f4CP2Hc/JHm6Wlk=');
-		dd($data);
+		$hashed = hash("sha512", $data.'7vczyovkpjD+co6yW9OfSUW8fTN8f4CP2Hc/JHm6Wlk=');
+		
 		$curl = curl_init();
 		curl_setopt_array($curl, array(
 		CURLOPT_URL => 'http://ics3staging.abiairs.gov.ng/assessment-api/api/vendor/payment/notification',
@@ -244,6 +250,6 @@ class AgentController extends Controller
 		$response = curl_exec($curl);
 		curl_close($curl);
 		$responseData = json_decode($response);
-		dd($responseData);
+		dd($responseData);*/
 	}
 }

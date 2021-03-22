@@ -31,10 +31,14 @@ class USSDController extends Controller
 		}
 		
 		$sendMessage="";
+		$output = [];
 		switch($Session->current_state)
 		{
 			case "1":
 				$sendMessage = "Welcome to Abia SelfServe\n1. My Payments\n2. Shop\n3. Agent\n4. Bus";
+				
+				$output['session_operation'] = "continue";
+				$output['session_msg'] = $sendMessage;
 				
 				$Session->current_state = "2";
 				$Session->save();
@@ -47,6 +51,9 @@ class USSDController extends Controller
 				{
 					$sendMessage = "1. Info\n2. Payment";
 				}
+				
+				$output['session_operation'] = "continue";
+				$output['session_msg'] = $sendMessage;
 				
 				$Session->current_state = "3";
 				$Session->save();
@@ -86,10 +93,13 @@ class USSDController extends Controller
 						}
 					}
 					
+					$output['session_operation'] = "end";
+					$output['session_msg'] = $sendMessage;
+					
 					$Session->delete();
 				}
 			break;
 		}
-        return $sendMessage;
+        return $output;
     }
 }
