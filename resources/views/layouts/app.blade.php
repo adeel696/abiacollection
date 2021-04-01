@@ -162,6 +162,12 @@
 <!-- DataTables -->
 <script src="{{ asset('admin/plugins/datatables/jquery.dataTables.js') }}"></script>
 <script src="{{ asset('admin/plugins/datatables-bs4/js/dataTables.bootstrap4.js') }}"></script>
+<script src="{{ asset('admin/plugins/datatables-buttons/js/dataTables.buttons.min.js') }}"></script>
+<script src="{{ asset('admin/plugins/datatables-buttons/js/buttons.flash.min.js') }}"></script>
+<script src="{{ asset('admin/plugins/datatables-buttons/js/buttons.html5.min.js') }}"></script>
+<script src="{{ asset('admin/plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
+
+
 <script src="{{ asset('admin/plugins/datatables/rowReorder.min.js') }}"></script>
 <!-- Select2 -->
 <script src="{{ asset('admin/plugins/select2/js/select2.full.min.js') }}"></script>

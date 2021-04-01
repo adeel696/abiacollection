@@ -3,7 +3,22 @@ $('#viewForm').DataTable({
 	"processing": true,
 	"serverSide": true,
 	"ajax": $("#ajaxGUrl").val(),
-	"columns": columns
+	"columns": columns,
+	dom: 'Bfrtip',
+	buttons: [
+		{
+			extend : 'csv',
+			className: 'btn btn-primary',
+			title : 'Export to CSV',
+			exportOptions : {
+				modifier : {
+ 					order : 'index', // 'current', 'applied',
+ 					page : 'all', // 'all', 'current'
+					search : 'none' // 'none', 'applied', 'removed'
+				},
+			}
+		}
+	]
 });
 
 $('#viewForm').on('click', '#btnDelete[data-remote]', function (e) { 

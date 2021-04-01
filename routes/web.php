@@ -12,14 +12,8 @@
 */
 
 
-Route::get('/login', function () {
-    return view('login');
-});
-
-Route::get('/', function () {
-    return view('login');
-});
-Route::get('/login', 'Auth\LoginController@showLoginForm');
+Route::get('/', 'Auth\LoginController@showLoginForm');
+Route::get('/login', 'Auth\LoginController@showLoginForm')->name('login');
 Route::post('/login', 'Auth\LoginController@login');
 Route::post('/logout', 'Auth\LoginController@logout');
 
@@ -28,7 +22,6 @@ Route::get('/abia_ussd', 'USSDController@index');
 Route::group(['middleware' => ['auth']], function() {
 	Route::get('/home', 'HomeController@index');
 	
-	Route::resource('/shop', 'ShopController');
 	
 	Route::get('/newagent', 'AgentController@getNewAgent');
 	Route::post('/importnewagent', 'AgentController@importNewAgent');

@@ -23,8 +23,10 @@ class USSDController extends Controller
     {
 		$Session = UssdSession::Where('msisdn',$request->msisdn)->First();
 		
-		if(!$Session)
+		if(!$Session || $request->message == '*8014*98')
 		{
+			UssdSession::Where('msisdn',$request->msisdn)->Delete();
+
 			$Session = new UssdSession;
 			$Session->msisdn = $request->msisdn;
 			$Session->current_state = "1";
@@ -34,7 +36,7 @@ class USSDController extends Controller
 		$output = [];
 		switch($Session->current_state)
 		{
-			case "1":
+			/*case "1":
 				$sendMessage = "Welcome to Abia SelfServe\n1. My Payments\n2. Shop\n3. Agent\n4. Bus";
 				
 				$output['session_operation'] = "continue";
@@ -43,23 +45,24 @@ class USSDController extends Controller
 				$Session->current_state = "2";
 				$Session->save();
 
-			break;
-			case "2":
+			break;*/
+			case "1":
 				
-				$Session->g_parent = $request->message;
-				if($request->message == "3")
+				//$Session->g_parent = $request->message;
+				/*if($request->message == "3")
 				{
 					$sendMessage = "1. Info\n2. Payment";
-				}
-				
+				}*/
+				$Session->g_parent = 3;
+				$sendMessage = "1. Info\n2. Payment";
 				$output['session_operation'] = "continue";
 				$output['session_msg'] = $sendMessage;
 				
-				$Session->current_state = "3";
+				$Session->current_state = "2";
 				$Session->save();
 				
 			break;
-			case "3":
+			case "2":
 				$Session->c_parent = $request->message;
 				if($Session->g_parent == "3")
 				{
@@ -80,7 +83,7 @@ class USSDController extends Controller
 							$info_Payment = Payment::Where('userid',$info_Agent->id)->OrderBy('id','desc')->First();
 							if($info_Payment)
 							{
-								$sendMessage = "Your Last Payment was N".$info_Payment->totalPayable." on ".$info_Payment->paidon."\n\nKeep Abia moving, Pay your levies on time";
+								$sendMessage = "Your Last Payment was N".((int)($info_Payment->totalPayable)*1)." on ".$info_Payment->paidon."\n\nKeep Abia moving, Pay your levies on time";
 							}
 							else
 							{
@@ -93,7 +96,7 @@ class USSDController extends Controller
 						}
 					}
 					
-					$output['session_operation'] = "end";
+					$output['session_operation'] = "continue";
 					$output['session_msg'] = $sendMessage;
 					
 					$Session->delete();

@@ -66,6 +66,7 @@ class AgentController extends Controller
 			$db_Driver->fullname = $Row[0];
 			$db_Driver->msisdn = $Row[2];
 			$db_Driver->plateno = $Row[0];
+			$db_Driver->atin = $Row[1];
 			$db_Driver->save();
 			
 			$db_Agent = new Agent;
@@ -74,14 +75,17 @@ class AgentController extends Controller
 			$db_Agent->email = $Row[3];
 			$db_Agent->address = $Row[4];
 			$db_Agent->type = $Row[5];
+			$db_Agent->atin = $Row[1];
 			$db_Agent->save();
 			
 			$accountCreatedResponse = $this->monnifyReserveAccount("LIVE", $Row[2], $Row[0], $Row[3], $Row[5]);
 			$responseData = json_decode($accountCreatedResponse);
 			if($responseData->requestSuccessful)
 			{
-				$message = "Dear ".$Row[0].",\nYour Agent account number is ".$responseData->responseBody->accountNumber." in Sterling Bank.\nUse USSD, POS or Mobile App to pay for your Ticket Order. Dial 801499# to check payment.";
-				file_get_contents("https://app.multitexter.com/v2/app/sms?email=tech@iyconsoft.com&message=".urlencode($message)."&recipients=".$Row[2]."&forcednd=1&password=sayntt123&sender_name=SELFSERVE");
+				$message = "Dear ".$Row[0].",\nYour Agent account number is ".$responseData->responseBody->accountNumber." in Sterling Bank.\nUse USSD, POS or Mobile App to pay for your Ticket Order. Dial *8014*99# to check payment.";
+				file_get_contents("http://3.131.19.214:8802/?phonenumber=".$Row[2]."&text=".urlencode($message)."&sender=SELFSERVE&user=selfserve&password=123456789");
+				
+				
 				$updatedRows[] = $Row;
 
 				$db_Driver->accountno = $responseData->responseBody->accountNumber;
@@ -124,12 +128,13 @@ class AgentController extends Controller
 		$customerEmail =  ($customerEmail == "NA" ?  "selfserverng@gmail.com" : $customerEmail);
 		$customerEmail =  ($customerEmail == "N/A" ?  "selfserverng@gmail.com" : $customerEmail);
 		
-		if($type == "independent")
+		if(strtolower($type) == "independent")
 		{
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_696124412434", "feePercentage" => 0, "splitPercentage" => 57.5, "feeBearer" => false);
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_777366599327", "feePercentage" => 0, "splitPercentage" => 6.25, "feeBearer" => false);
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_396131675212", "feePercentage" => 0, "splitPercentage" => 11.5, "feeBearer" => false);
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_923548935133", "feePercentage" => 0, "splitPercentage" => 11.5, "feeBearer" => false);
+			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_473624252548", "feePercentage" => 0, "splitPercentage" => 5.75, "feeBearer" => false);
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_837784943424", "feePercentage" => 100, "splitPercentage" => 7.5, "feeBearer" => true);
 			$username = 'MK_PROD_9V6KP4EZ5T';
 			$password = '3VBV6G53V9STR554ZYW4H2T4EH72WERP';
@@ -205,9 +210,6 @@ class AgentController extends Controller
 
 		\Log::info('MonnifyCallback: '.$json);
 				
-		$transactionReference = explode("|",$decodeData->transactionReference);
-		$message = "Reciept:\nDate: ".$decodeData->paidOn."\nRef: ".$decodeData->transactionReference."\nPayer: ".$decodeData->accountDetails->accountName."\nAmount Paid: N".$decodeData->totalPayable."\nID: ".$transactionReference[2]."\nDial *8014*99# to confirm payments";
-		file_get_contents("https://app.multitexter.com/v2/app/sms?email=tech@iyconsoft.com&message=".urlencode($message)."&recipients=".$decodeData->product->reference."&forcednd=1&password=sayntt123&sender_name=SELFSERVE");
 		
 		$info_Agent = Agent::Where('msisdn',$decodeData->product->reference)->First();
 		$db_payment = new Payment;
@@ -225,15 +227,20 @@ class AgentController extends Controller
 		$db_payment->channel = 'Monnify';
 		$db_payment->save();
 		
-		
+		//Send SMS
+		$transactionReference = explode("|",$decodeData->transactionReference);
+		$message = "Reciept:\nDate: ".$decodeData->paidOn."\nRef: ".$decodeData->transactionReference."\nPayer: ".$info_Agent->name."\nAmount Paid: N".$decodeData->totalPayable."\nID: ".$info_Agent->atin."\nDial *8014*99# to confirm payments";
+		file_get_contents("http://3.131.19.214:8802/?phonenumber=".$decodeData->product->reference."&text=".urlencode($message)."&sender=SELFSERVE&user=selfserve&password=123456789");
+
+
 		//IBRIS
-		/*$data = '{"paymentGatewayProvider": "lyconsoft","paymentProviderNotificationLogId": "11123","paymentProviderReferenceNumber": "'.$decodeData->paymentReference.'","paymentDate": "'.$decodeData->paidOn.'","paymentProviderCustomerName": "'.$decodeData->accountDetails->accountName.'","paymentProviderCustomerPhoneNumber": "'.$decodeData->product->reference.'","paymentProviderCustomerReference": "'.$decodeData->product->reference.'","paymentProviderChannel": "ussd","totalAmountInKobo": '.$decodeData->totalPayable.',"paymentLineItem": [{"amountPaidInKobo": '.$decodeData->totalPayable.',"paymentAgencyCode": "20008001","paymentRevenueCode": "12040275"}],"taxPayerIdentificationNumber": "'.$decodeData->product->reference.'","taxYear": "2021"}';
-		
-		$hashed = hash("sha512", $data.'7vczyovkpjD+co6yW9OfSUW8fTN8f4CP2Hc/JHm6Wlk=');
+		$data = '{"paymentGatewayProvider": "selfserve","paymentProviderNotificationLogId": "'.($db_payment->id*1000).'","paymentProviderReferenceNumber": "'.$decodeData->paymentReference.'","paymentDate": '.(\DateTime::createFromFormat('d/m/Y g:i:s A', $decodeData->paidOn)->format('"d-m-Y H:i:s"')).',"paymentProviderCustomerName": "'.$info_Agent->name.'","paymentProviderCustomerPhoneNumber": "'.$decodeData->product->reference.'","paymentProviderCustomerReference": "'.$info_Agent->atin.'","paymentProviderChannel": "ussd","totalAmountInKobo": '.((int)($decodeData->totalPayable)*100).',"paymentLineItem": [{"amountPaidInKobo": '.((int)($decodeData->totalPayable)*100).',"paymentAgencyCode": "20008001","paymentRevenueCode": "12040275"}],"taxPayerIdentificationNumber": "'.$info_Agent->atin.'","taxYear": "2021"}';
+		\Log::info('IBRIS Payload: '.$data);
+		$hashed = hash("sha512", $data.'pg88L85MXyj6Nedr0j+6sOui6ubhP6jB2oZPlJtfQPk=');
 		
 		$curl = curl_init();
 		curl_setopt_array($curl, array(
-		CURLOPT_URL => 'http://ics3staging.abiairs.gov.ng/assessment-api/api/vendor/payment/notification',
+		CURLOPT_URL => 'https://www.abiairs.gov.ng/assessment-api/api/vendor/payment/notification',
 		CURLOPT_RETURNTRANSFER => true,
 		CURLOPT_ENCODING => "",
 		CURLOPT_MAXREDIRS => 10,
@@ -243,13 +250,21 @@ class AgentController extends Controller
 		CURLOPT_CUSTOMREQUEST => "POST",
 		CURLOPT_POSTFIELDS => $data,
 		CURLOPT_HTTPHEADER => array(
-				"vendorCode: ACCT0000013435",
+				"vendorCode: ACCT0000059919",
 				"hash:" . $hashed
 			),
 		));
 		$response = curl_exec($curl);
+		\Log::info('IBRIS Response: '.$response);
 		curl_close($curl);
 		$responseData = json_decode($response);
-		dd($responseData);*/
+		//print_r($responseData);
+
+		$db_payment->PaymentRetrivialReference = $responseData->body->paymentRetrievalReference;
+		$db_payment->save();
+		
+		//print_r($responseData);
+
+		return "OK";
 	}
 }

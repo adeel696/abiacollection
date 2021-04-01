@@ -34,6 +34,7 @@
                 <th>S/N</th>
                 <th>Date</th>
 				<th>Payment Ref</th>
+				<th>Payment Retrivial Reference</th>
                 <th>Amount paid</th>
                 <th>Agent</th>
                 <th>Phone Number</th>
@@ -62,6 +63,7 @@
 			{ data: 'id', name: 'id' },
 			{ data: 'paidon', name: 'paidon' },
 			{ data: 'paymentref', name: 'paymentref' },
+			{ data: 'PaymentRetrivialReference', name: 'PaymentRetrivialReference' },
 			{ data: 'totalPayable', name: 'totalPayable' },
 			{ data: 'name', name: 'name' },
 			{ data: 'msisdn', name: 'msisdn' },
