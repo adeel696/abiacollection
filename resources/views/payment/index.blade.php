@@ -41,6 +41,7 @@
                 <th>Email</th>
                 <th>Address</th>
                 <th>Type</th>
+                <th>Action</th>
             </tr>
             </thead>
             <tbody>
@@ -70,7 +71,31 @@
 			{ data: 'email', name: 'email' },
 			{ data: 'address', name: 'address' },
 			{ data: 'type', name: 'type' },
+			{ data: 'edit', name: 'edit' },
 			];
+	
+	$('#viewForm').on('click', '#btnResend[data-remote]', function (e) { 
+		if (confirm("Are you sure to resend?")) {		
+			e.preventDefault();		 
+			var url = $(this).data('remote');
+			// confirm then
+			$.ajax({
+				url: url,
+				type: 'POST',
+				dataType: 'text',
+				data: {method: '_POST', "_token": "{{ csrf_token() }}" , submit: true},
+				success: function (response) {
+					console.log(response);
+				},
+				error: function (result, status, err) {
+					console.log(result);
+				},
+			}).always(function (data) {
+				$('#viewForm').DataTable().draw(false);
+			});
+		}
+		return false;
+	});
 </script>
 
 @endpush

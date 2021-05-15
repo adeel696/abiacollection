@@ -19,6 +19,8 @@ Route::post('/logout', 'Auth\LoginController@logout');
 
 Route::get('/abia_ussd', 'USSDController@index');
 
+Route::get('/upagent', 'AgentController@upAgent');
+
 Route::group(['middleware' => ['auth']], function() {
 	Route::get('/home', 'HomeController@index');
 	
@@ -29,6 +31,8 @@ Route::group(['middleware' => ['auth']], function() {
 	Route::get('/agent/grid', 'AgentController@getAgentGrid');
 	Route::get('/agent', 'AgentController@getAgent');
 	
+	Route::post('/payment/recallibris/{payment}', 'PaymentController@RecallIbris');
 	Route::get('/payment/grid', 'PaymentController@getPaymentGrid');
 	Route::get('/payment', 'PaymentController@getPayment');
+	
 });
