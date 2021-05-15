@@ -18,6 +18,8 @@
   <link rel="stylesheet" href="{{ asset('admin/plugins/datatables-bs4/css/dataTables.bootstrap4.css') }}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('admin/dist/css/adminlte.min.css') }}">
+  <!-- daterange picker -->
+  <link rel="stylesheet" href="{{ asset('admin/plugins/daterangepicker/daterangepicker.css') }}">
   <!-- summernote -->
   <link rel="stylesheet" href="{{ asset('admin/plugins/summernote/summernote-bs4.css') }}">
   <!-- Select2 -->
@@ -167,6 +169,9 @@
 <script src="{{ asset('admin/plugins/datatables-buttons/js/buttons.html5.min.js') }}"></script>
 <script src="{{ asset('admin/plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
 
+<script src="{{ asset('admin/plugins/moment/moment.min.js') }}"></script>
+<!-- date-range-picker -->
+<script src="{{ asset('admin/plugins/daterangepicker/daterangepicker.js') }}"></script>
 
 <script src="{{ asset('admin/plugins/datatables/rowReorder.min.js') }}"></script>
 <!-- Select2 -->

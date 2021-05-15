@@ -13,7 +13,7 @@ $('#viewForm').DataTable({
 			exportOptions : {
 				modifier : {
  					order : 'index', // 'current', 'applied',
- 					page : 'all', // 'all', 'current'
+ 					page : 'current', // 'all', 'current'
 					search : 'none' // 'none', 'applied', 'removed'
 				},
 			}

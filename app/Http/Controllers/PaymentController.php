@@ -58,9 +58,17 @@ class PaymentController extends Controller
 		}
     }
 	
-	public function getPaymentGrid()
+	public function getPaymentGrid(Request $request)
     {
-		$info_Payment = Payment::Select('payment.id', 'payment.userid', 'payment.paymentref', 'payment.PaymentRetrivialReference','payment.transactionreference', 'payment.amountPaid', 'payment.totalPayable', 'payment.settlementAmount', 'payment.paidon', 'payment.paymentmethod', 'payment.paymentstatus', 'payment.datecreated', 'payment.request_dump', 'payment.channel', 'agents.name', 'agents.msisdn', 'agents.email', 'agents.address', 'agents.type')->join('agents', 'payment.userid', '=', 'agents.id')->Get();
+		if(isset($request->Search))
+		{
+			$info_Payment = Payment::Select('payment.id', 'payment.userid', 'payment.paymentref', 'payment.PaymentRetrivialReference','payment.transactionreference', 'payment.amountPaid', 'payment.totalPayable', 'payment.settlementAmount', 'payment.paidon', 'payment.paymentmethod', 'payment.paymentstatus', 'payment.datecreated', 'payment.request_dump', 'payment.channel', 'agents.name', 'agents.msisdn', 'agents.email', 'agents.address', 'agents.type')->join('agents', 'payment.userid', '=', 'agents.id')->where('datecreated', '>=' , $request->From)->where('datecreated', '<=' , $request->To)->Get();
+		}
+		else
+		{
+			$info_Payment = Payment::Select('payment.id', 'payment.userid', 'payment.paymentref', 'payment.PaymentRetrivialReference','payment.transactionreference', 'payment.amountPaid', 'payment.totalPayable', 'payment.settlementAmount', 'payment.paidon', 'payment.paymentmethod', 'payment.paymentstatus', 'payment.datecreated', 'payment.request_dump', 'payment.channel', 'agents.name', 'agents.msisdn', 'agents.email', 'agents.address', 'agents.type')->join('agents', 'payment.userid', '=', 'agents.id')->Get();
+		}
+		
 	   	return DataTables::of($info_Payment)
 		->addColumn('edit', function ($info_Payment) {
 				 return '<div class="btn-group btn-group-action">
