@@ -51,9 +51,17 @@ class AgentController extends Controller
     	$TotalRows = array_map('str_getcsv', file($path));
 		$Rows = array_slice($TotalRows, 1);
 		
-		$info_Driver_Count = Driver::WhereIn('msisdn',array_column($Rows,2))->Get()->Count();
+		$info_Agent_Count = 0;
+		foreach($Rows as $Row)
+		{
+			$info_Agent = Agent::Where('msisdn','234'.substr($Row[2],-10))->Where('type', $Row[5])->First();
+			if($info_Agent)
+			{
+				$info_Agent_Count = $info_Agent_Count+1;
+			}
+		}
 		
-		if($info_Driver_Count > 0)
+		if($info_Agent_Count > 0)
 		{
 			Session::flash('error_message', "Upload fails (Duplicate no.)");
 			return Redirect::back();
@@ -62,12 +70,12 @@ class AgentController extends Controller
 		foreach($Rows as $Row)
 		{
 			//dd($Row);
-			$db_Driver = new Driver;
+			/*$db_Driver = new Driver;
 			$db_Driver->fullname = $Row[0];
 			$db_Driver->msisdn = '234'.substr($Row[2],-10);
 			$db_Driver->plateno = $Row[0];
 			$db_Driver->atin = $Row[1];
-			$db_Driver->save();
+			$db_Driver->save();*/
 			
 			$db_Agent = new Agent;
 			$db_Agent->name = $Row[0];
@@ -76,9 +84,25 @@ class AgentController extends Controller
 			$db_Agent->address = $Row[4];
 			$db_Agent->type = $Row[5];
 			$db_Agent->atin = $Row[1];
+			
+			if(strtolower($Row[5]) == "okada")
+			{
+				$db_Agent->account_reference = '234'.substr($Row[2],-10).'O';
+			}
+			else
+			if(strtolower($Row[5]) == "keke")
+			{
+				$db_Agent->account_reference = '234'.substr($Row[2],-10).'K';
+			}
+			else
+			if(strtolower($Row[5]) == "others")
+			{
+				$db_Agent->account_reference = '234'.substr($Row[2],-10).'S';
+			}
+			
 			$db_Agent->save();
 			
-			$accountCreatedResponse = $this->monnifyReserveAccount("LIVE", '234'.substr($Row[2],-10), $Row[0], $Row[3], $Row[5]);
+			$accountCreatedResponse = $this->monnifyReserveAccount("LIVE", '234'.substr($Row[2],-10), $db_Agent->account_reference, $Row[0], $Row[3], $Row[5]);
 			$responseData = json_decode($accountCreatedResponse);
 			if($responseData->requestSuccessful)
 			{
@@ -90,9 +114,9 @@ class AgentController extends Controller
 				
 				$updatedRows[] = $Row;
 
-				$db_Driver->accountno = $responseData->responseBody->accountNumber;
-				$db_Driver->save();
-
+				//$db_Driver->accountno = $responseData->responseBody->accountNumber;
+				//$db_Driver->save();
+				
 				$db_Agent->accountcreatedresponse = $accountCreatedResponse;
 				$db_Agent->accountno = $responseData->responseBody->accountNumber;
 				$db_Agent->save();
@@ -101,7 +125,7 @@ class AgentController extends Controller
 			{
 				Session::flash('error_message', "Create account fail");
 				Session::flash('updatedRows', $updatedRows);
-				$db_Driver->delete();
+				//$db_Driver->delete();
 				$db_Agent->delete();
 				return Redirect::back();
 			}
@@ -118,7 +142,7 @@ class AgentController extends Controller
         return Redirect('newagent');
     }
 	
-	function monnifyReserveAccount($istest = "LIVE", $msisdn, $fullname, $customerEmail, $type) 
+	function monnifyReserveAccount($istest = "LIVE", $msisdn, $account_reference, $fullname, $customerEmail, $type) 
 	{
 		$url = "https://api.monnify.com/api/v1/bank-transfer/reserved-accounts";
 		$login_url = "https://api.monnify.com/api/v1/auth/login";
@@ -154,13 +178,14 @@ class AgentController extends Controller
 			$contractCode = "725275533691";
 		}
 		else
+		if(strtolower($type) == "keke")
 		{
 			/*$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_347125728976", "feePercentage" => 0, "splitPercentage" => 74.68, "feeBearer" => false);
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_476695577389", "feePercentage" => 0, "splitPercentage" => 8.12, "feeBearer" => false);
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_489851861579", "feePercentage" => 100, "splitPercentage" => 9.73, "feeBearer" => true);
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_727483551233", "feePercentage" => 0, "splitPercentage" => 7.47, "feeBearer" => false);*/
 
-			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_476695577389", "feePercentage" => 0, "splitPercentage" => 23.4, "feeBearer" => false);
+			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_476695577389", "feePercentage" => 0, "splitPercentage" => 23.24, "feeBearer" => false);
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_727483551233", "feePercentage" => 0, "splitPercentage" => 4.54, "feeBearer" => false);
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_347125728976", "feePercentage" => 0, "splitPercentage" => 63.89, "feeBearer" => false);
 			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_489851861579", "feePercentage" => 100, "splitPercentage" => 8.33, "feeBearer" => true);
@@ -169,9 +194,21 @@ class AgentController extends Controller
 			$password = 'HG55Q22MRS4DPXZSK8KHWV9GLKDFC82Z';
 			$contractCode = "662131815131";
 		}
+		else
+		if(strtolower($type) == "others")
+		{
+			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_794774544824", "feePercentage" => 0, "splitPercentage" => 6.25, "feeBearer" => false);
+			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_393441595619", "feePercentage" => 0, "splitPercentage" => 86.25, "feeBearer" => false);
+			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_774412756725", "feePercentage" => 0, "splitPercentage" => 6.25, "feeBearer" => false);
+			$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_884513776734", "feePercentage" => 100, "splitPercentage" => 1.25, "feeBearer" => true);
+			
+			$username = 'MK_PROD_QAC28QUESH';
+			$password = 'QNZXRQPRRZ4ATFWQZYBEE2QUU7QXRF3G';
+			$contractCode = "768651769665";
+		}
 		
 		$accountname = strtoupper($fullname);
-		$data = json_encode(array("accountReference" => $msisdn, "accountName"  => $accountname, "currencyCode" => "NGN", "contractCode" => $contractCode, "customerEmail" => $customerEmail, "customerName" => $fullname, "incomeSplitConfig" => $incomeSplitconfig));
+		$data = json_encode(array("accountReference" => $account_reference, "accountName"  => $accountname, "currencyCode" => "NGN", "contractCode" => $contractCode, "customerEmail" => $customerEmail, "customerName" => $fullname, "incomeSplitConfig" => $incomeSplitconfig));
 		
 		
 		
@@ -229,7 +266,7 @@ class AgentController extends Controller
 		\Log::info('MonnifyCallback: '.$json);
 		\Log::info('Msisdn: '.'234'.substr($decodeData->product->reference,-10));		
 		
-		$info_Agent = Agent::Where('msisdn','234'.substr($decodeData->product->reference,-10))->First();
+		$info_Agent = Agent::Where('account_reference',$decodeData->product->reference)->First();
 		$db_payment = new Payment;
 		$db_payment->userid = $info_Agent->id;
 		$db_payment->paymentref = $decodeData->paymentReference;
@@ -249,14 +286,18 @@ class AgentController extends Controller
 		$transactionReference = explode("|",$decodeData->transactionReference);
 		$message = "Reciept:\nDate: ".$decodeData->paidOn."\nRef: ".$decodeData->transactionReference."\nPayer: ".$info_Agent->name."\nAmount Paid: N".$decodeData->totalPayable."\nID: ".$info_Agent->atin."\nDial *8014*99# to confirm payments";
 		
-		\Log::info("Send SMS: http://3.131.19.214:8802/?phonenumber=".('234'.substr($decodeData->product->reference,-10))."&text=".urlencode($message)."&sender=SELFSERVE&user=selfserve&password=123456789");
-		file_get_contents("http://3.131.19.214:8802/?phonenumber=".$decodeData->product->reference."&text=".urlencode($message)."&sender=SELFSERVE&user=selfserve&password=123456789");
+		\Log::info("Send SMS: http://3.131.19.214:8802/?phonenumber=".$info_Agent->msisdn."&text=".urlencode($message)."&sender=SELFSERVE&user=selfserve&password=123456789");
+		file_get_contents("http://3.131.19.214:8802/?phonenumber=".$info_Agent->msisdn."&text=".urlencode($message)."&sender=SELFSERVE&user=selfserve&password=123456789");
 
 
 		//IBRIS
 		$data = '{"paymentGatewayProvider": "selfserve","paymentProviderNotificationLogId": "'.($db_payment->id*1000).'","paymentProviderReferenceNumber": "'.$decodeData->paymentReference.'","paymentDate": '.(\DateTime::createFromFormat('d/m/Y g:i:s A', $decodeData->paidOn)->format('"d-m-Y H:i:s"')).',"paymentProviderCustomerName": "'.$info_Agent->name.'","paymentProviderCustomerPhoneNumber": "'.$decodeData->product->reference.'","paymentProviderCustomerReference": "'.$info_Agent->atin.'","paymentProviderChannel": "ussd","totalAmountInKobo": '.((int)($decodeData->totalPayable)*100).',"paymentLineItem": [{"amountPaidInKobo": '.((int)($decodeData->totalPayable)*100).',"paymentAgencyCode": "20008001","paymentRevenueCode": "12040275"}],"taxPayerIdentificationNumber": "'.$info_Agent->atin.'","taxYear": "2021"}';
 		\Log::info('IBRIS Payload: '.$data);
-		$hashed = hash("sha512", $data.'pg88L85MXyj6Nedr0j+6sOui6ubhP6jB2oZPlJtfQPk=');
+		
+		//Test
+		$hashed = hash("sha512", $data.'7vczyovkpjD+co6yW9OfSUW8fTN8f4CP2Hc/JHm6Wlk=');
+		//Live
+		//$hashed = hash("sha512", $data.'pg88L85MXyj6Nedr0j+6sOui6ubhP6jB2oZPlJtfQPk=');
 		
 		
 		$db_payment->ibris_request_dump = $data;
@@ -264,7 +305,8 @@ class AgentController extends Controller
 		
 		$curl = curl_init();
 		curl_setopt_array($curl, array(
-		CURLOPT_URL => 'https://www.abiairs.gov.ng/assessment-api/api/vendor/payment/notification',
+		CURLOPT_URL => 'http://ics3staging.abiairs.gov.ng/assessment-api/api/vendor/payment/validation', //Test
+		//CURLOPT_URL => 'https://www.abiairs.gov.ng/assessment-api/api/vendor/payment/notification', //Live
 		CURLOPT_RETURNTRANSFER => true,
 		CURLOPT_ENCODING => "",
 		CURLOPT_MAXREDIRS => 10,
@@ -274,7 +316,8 @@ class AgentController extends Controller
 		CURLOPT_CUSTOMREQUEST => "POST",
 		CURLOPT_POSTFIELDS => $data,
 		CURLOPT_HTTPHEADER => array(
-				"vendorCode: ACCT0000059919",
+				"vendorCode: ACCT0000013435", //Test
+				//"vendorCode: ACCT0000059919", //Live
 				"hash:" . $hashed
 			),
 		));
@@ -290,101 +333,5 @@ class AgentController extends Controller
 		//print_r($responseData);
 
 		return "OK";
-	}
-	
-	
-	function upAgent() 
-	{
-		$info_Agents = Agent::Where('type','keke')->Get();
-		$token = "";
-		foreach($info_Agents as $info_Agent)
-		{
-			if(strtolower($info_Agent->type) == "okada")
-			{
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_777366599327", "feePercentage" => 0, "splitPercentage" => 6.94, "feeBearer" => false);
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_473624252548", "feePercentage" => 0, "splitPercentage" => 4.54, "feeBearer" => false);
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_696124412434", "feePercentage" => 0, "splitPercentage" => 31.94, "feeBearer" => false);
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_837784943424", "feePercentage" => 100, "splitPercentage" => 8.25, "feeBearer" => true);
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_317431997858", "feePercentage" => 0, "splitPercentage" => 48.33, "feeBearer" => false);
-	
-				$username = 'MK_PROD_9V6KP4EZ5T';
-				$password = '3VBV6G53V9STR554ZYW4H2T4EH72WERP';
-				$contractCode = "725275533691";
-				
-				echo $url = "https://api.monnify.com/api/v1/bank-transfer/reserved-accounts/update-income-split-config/0".substr($info_Agent->msisdn,-10);
-				$login_url = "https://api.monnify.com/api/v1/auth/login";
-			}
-			else
-			{
-				/*$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_347125728976", "feePercentage" => 0, "splitPercentage" => 74.68, "feeBearer" => false);
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_476695577389", "feePercentage" => 0, "splitPercentage" => 8.12, "feeBearer" => false);
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_489851861579", "feePercentage" => 100, "splitPercentage" => 9.73, "feeBearer" => true);
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_727483551233", "feePercentage" => 0, "splitPercentage" => 7.47, "feeBearer" => false);*/
-	
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_476695577389", "feePercentage" => 0, "splitPercentage" => 23.24, "feeBearer" => false);
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_727483551233", "feePercentage" => 0, "splitPercentage" => 4.54, "feeBearer" => false);
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_347125728976", "feePercentage" => 0, "splitPercentage" => 63.89, "feeBearer" => false);
-				$incomeSplitconfig[] = array ("subAccountCode" => "MFY_SUB_489851861579", "feePercentage" => 100, "splitPercentage" => 8.33, "feeBearer" => true);
-				
-				$username = 'MK_PROD_4Y65HT74M4';
-				$password = 'HG55Q22MRS4DPXZSK8KHWV9GLKDFC82Z';
-				$contractCode = "662131815131";
-				
-				echo $url = "https://api.monnify.com/api/v1/bank-transfer/reserved-accounts/update-income-split-config/".$info_Agent->msisdn;
-				$login_url = "https://api.monnify.com/api/v1/auth/login";
-			}
-			
-			if($token == "")
-			{
-				$data = json_encode($incomeSplitconfig);
-				echo ($data);
-				//Login
-				$curl = curl_init();
-				curl_setopt_array($curl, array(
-				CURLOPT_URL => $login_url,
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_ENCODING => "",
-				CURLOPT_MAXREDIRS => 10,
-				CURLOPT_TIMEOUT => 0,
-				CURLOPT_FOLLOWLOCATION => true,
-				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-				CURLOPT_CUSTOMREQUEST => "POST",
-				CURLOPT_POSTFIELDS => $data,
-				CURLOPT_HTTPHEADER => array(
-						"Authorization: Basic " . base64_encode("$username:$password")
-					),
-				));
-				$response = curl_exec($curl);
-				curl_close($curl);
-				
-				
-				$responseData = json_decode($response);
-				$token = ($responseData->responseBody->accessToken);
-			}
-			
-			//Call Account
-			$curl = curl_init();
-			curl_setopt_array($curl, array(
-			CURLOPT_URL => $url,
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_ENCODING => "",
-			CURLOPT_MAXREDIRS => 10,
-			CURLOPT_TIMEOUT => 0,
-			CURLOPT_FOLLOWLOCATION => true,
-			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-			CURLOPT_CUSTOMREQUEST => "PUT",
-			CURLOPT_POSTFIELDS => $data,
-			CURLOPT_HTTPHEADER => array(
-					"Content-Type: application/json",
-					"Authorization: Bearer " . $token
-				),
-			));
-			$response = curl_exec($curl);
-			\Log::info('monnifyReserveAccount: '.$response);
-			curl_close($curl);
-			
-			print($response);
-			
-		}
 	}
 }

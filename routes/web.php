@@ -19,7 +19,7 @@ Route::post('/logout', 'Auth\LoginController@logout');
 
 Route::get('/abia_ussd', 'USSDController@index');
 
-Route::get('/upagent', 'AgentController@upAgent');
+Route::get('/upagent', 'UpdateAgentController@upAgent');
 
 Route::group(['middleware' => ['auth']], function() {
 	Route::get('/home', 'HomeController@index');
