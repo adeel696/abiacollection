@@ -54,10 +54,14 @@ class AgentController extends Controller
 		$info_Agent_Count = 0;
 		foreach($Rows as $Row)
 		{
-			$info_Agent = Agent::Where('msisdn','234'.substr($Row[2],-10))->Where('type', $Row[5])->First();
-			if($info_Agent)
+			//dd($Row[2]);
+			if(isset($Row[2]) && $Row[2] != "")
 			{
-				$info_Agent_Count = $info_Agent_Count+1;
+				$info_Agent = Agent::Where('msisdn','234'.substr($Row[2],-10))->Where('type', $Row[5])->First();
+				if($info_Agent)
+				{
+					$info_Agent_Count = $info_Agent_Count+1;
+				}
 			}
 		}
 		
@@ -66,71 +70,74 @@ class AgentController extends Controller
 			Session::flash('error_message', "Upload fails (Duplicate no.)");
 			return Redirect::back();
 		}
+
 		$updatedRows = [];
 		foreach($Rows as $Row)
 		{
-			//dd($Row);
-			/*$db_Driver = new Driver;
-			$db_Driver->fullname = $Row[0];
-			$db_Driver->msisdn = '234'.substr($Row[2],-10);
-			$db_Driver->plateno = $Row[0];
-			$db_Driver->atin = $Row[1];
-			$db_Driver->save();*/
-			
-			$db_Agent = new Agent;
-			$db_Agent->name = $Row[0];
-			$db_Agent->msisdn = '234'.substr($Row[2],-10);
-			$db_Agent->email = $Row[3];
-			$db_Agent->address = $Row[4];
-			$db_Agent->type = $Row[5];
-			$db_Agent->atin = $Row[1];
-			
-			if(strtolower($Row[5]) == "okada")
+			if(isset($Row[2]) && $Row[2] != "")
 			{
-				$db_Agent->account_reference = '234'.substr($Row[2],-10).'O';
-			}
-			else
-			if(strtolower($Row[5]) == "keke")
-			{
-				$db_Agent->account_reference = '234'.substr($Row[2],-10).'K';
-			}
-			else
-			if(strtolower($Row[5]) == "others")
-			{
-				$db_Agent->account_reference = '234'.substr($Row[2],-10).'S';
-			}
-			
-			$db_Agent->save();
-			
-			$accountCreatedResponse = $this->monnifyReserveAccount("LIVE", '234'.substr($Row[2],-10), $db_Agent->account_reference, $Row[0], $Row[3], $Row[5]);
-			$responseData = json_decode($accountCreatedResponse);
-			if($responseData->requestSuccessful)
-			{
-				$message = "Dear ".$Row[0].",\nYour Agent account number is ".$responseData->responseBody->accountNumber." in Sterling Bank.\nUse USSD, POS or Mobile App to pay for your Ticket Order. Dial *8014*99# to check payment.";
+				//dd($Row);
+				/*$db_Driver = new Driver;
+				$db_Driver->fullname = $Row[0];
+				$db_Driver->msisdn = '234'.substr($Row[2],-10);
+				$db_Driver->plateno = $Row[0];
+				$db_Driver->atin = $Row[1];
+				$db_Driver->save();*/
 				
-				\Log::info("Send SMS: http://3.131.19.214:8802/?phonenumber=".('234'.substr($Row[2],-10))."&text=".urlencode($message)."&sender=SELFSERVE&user=selfserve&password=123456789");
-				file_get_contents("http://3.131.19.214:8802/?phonenumber=".('234'.substr($Row[2],-10))."&text=".urlencode($message)."&sender=SELFSERVE&user=selfserve&password=123456789");
+				$db_Agent = new Agent;
+				$db_Agent->name = $Row[0];
+				$db_Agent->msisdn = '234'.substr($Row[2],-10);
+				$db_Agent->email = $Row[3];
+				$db_Agent->address = $Row[4];
+				$db_Agent->type = $Row[5];
+				$db_Agent->atin = $Row[1];
 				
+				if(strtolower($Row[5]) == "okada")
+				{
+					$db_Agent->account_reference = '234'.substr($Row[2],-10).'O';
+				}
+				else
+				if(strtolower($Row[5]) == "keke")
+				{
+					$db_Agent->account_reference = '234'.substr($Row[2],-10).'K';
+				}
+				else
+				if(strtolower($Row[5]) == "others")
+				{
+					$db_Agent->account_reference = '234'.substr($Row[2],-10).'S';
+				}
 				
-				$updatedRows[] = $Row;
-
-				//$db_Driver->accountno = $responseData->responseBody->accountNumber;
-				//$db_Driver->save();
-				
-				$db_Agent->accountcreatedresponse = $accountCreatedResponse;
-				$db_Agent->accountno = $responseData->responseBody->accountNumber;
 				$db_Agent->save();
-			}
-			else
-			{
-				Session::flash('error_message', "Create account fail");
-				Session::flash('updatedRows', $updatedRows);
-				//$db_Driver->delete();
-				$db_Agent->delete();
-				return Redirect::back();
-			}
+				
+				$accountCreatedResponse = $this->monnifyReserveAccount("LIVE", '234'.substr($Row[2],-10), $db_Agent->account_reference, $Row[0], $Row[3], $Row[5]);
+				$responseData = json_decode($accountCreatedResponse);
+				if($responseData->requestSuccessful)
+				{
+					$message = "Dear ".$Row[0].",\nYour Agent account number is ".$responseData->responseBody->accountNumber." in Sterling Bank.\nUse USSD, POS or Mobile App to pay for your Ticket Order. Dial *8014*99# to check payment.";
+					
+					\Log::info("Send SMS: http://3.131.19.214:8802/?phonenumber=".('234'.substr($Row[2],-10))."&text=".urlencode($message)."&sender=SELFSERVE&user=selfserve&password=123456789");
+					file_get_contents("http://3.131.19.214:8802/?phonenumber=".('234'.substr($Row[2],-10))."&text=".urlencode($message)."&sender=SELFSERVE&user=selfserve&password=123456789");
+					
+					
+					$updatedRows[] = $Row;
+
+					//$db_Driver->accountno = $responseData->responseBody->accountNumber;
+					//$db_Driver->save();
+					
+					$db_Agent->accountcreatedresponse = $accountCreatedResponse;
+					$db_Agent->accountno = $responseData->responseBody->accountNumber;
+					$db_Agent->save();
+				}
+				else
+				{
+					Session::flash('error_message', "Create account fail");
+					Session::flash('updatedRows', $updatedRows);
+					//$db_Driver->delete();
+					$db_Agent->delete();
+					return Redirect::back();
+				}
 			
-			
+			}
 			
 			///print_r($db_Driver);
 			///print_r($db_Agent);
@@ -264,9 +271,9 @@ class AgentController extends Controller
 		$decodeData = json_decode($json);
 
 		\Log::info('MonnifyCallback: '.$json);
-		\Log::info('Msisdn: '.'234'.substr($decodeData->product->reference,-10));		
+		\Log::info('Msisdn: '.'234'.substr($decodeData->product->reference,3));		
 		
-		$info_Agent = Agent::Where('account_reference',$decodeData->product->reference)->First();
+		$info_Agent = Agent::Where('account_reference','234'.substr($decodeData->product->reference,3))->First();
 		$db_payment = new Payment;
 		$db_payment->userid = $info_Agent->id;
 		$db_payment->paymentref = $decodeData->paymentReference;
@@ -295,9 +302,9 @@ class AgentController extends Controller
 		\Log::info('IBRIS Payload: '.$data);
 		
 		//Test
-		$hashed = hash("sha512", $data.'7vczyovkpjD+co6yW9OfSUW8fTN8f4CP2Hc/JHm6Wlk=');
+		//$hashed = hash("sha512", $data.'7vczyovkpjD+co6yW9OfSUW8fTN8f4CP2Hc/JHm6Wlk=');
 		//Live
-		//$hashed = hash("sha512", $data.'pg88L85MXyj6Nedr0j+6sOui6ubhP6jB2oZPlJtfQPk=');
+		$hashed = hash("sha512", $data.'pg88L85MXyj6Nedr0j+6sOui6ubhP6jB2oZPlJtfQPk=');
 		
 		
 		$db_payment->ibris_request_dump = $data;
@@ -305,8 +312,8 @@ class AgentController extends Controller
 		
 		$curl = curl_init();
 		curl_setopt_array($curl, array(
-		CURLOPT_URL => 'http://ics3staging.abiairs.gov.ng/assessment-api/api/vendor/payment/validation', //Test
-		//CURLOPT_URL => 'https://www.abiairs.gov.ng/assessment-api/api/vendor/payment/notification', //Live
+		//CURLOPT_URL => 'http://ics3staging.abiairs.gov.ng/assessment-api/api/vendor/payment/validation', //Test
+		CURLOPT_URL => 'https://www.abiairs.gov.ng/assessment-api/api/vendor/payment/notification', //Live
 		CURLOPT_RETURNTRANSFER => true,
 		CURLOPT_ENCODING => "",
 		CURLOPT_MAXREDIRS => 10,
@@ -316,8 +323,8 @@ class AgentController extends Controller
 		CURLOPT_CUSTOMREQUEST => "POST",
 		CURLOPT_POSTFIELDS => $data,
 		CURLOPT_HTTPHEADER => array(
-				"vendorCode: ACCT0000013435", //Test
-				//"vendorCode: ACCT0000059919", //Live
+				//"vendorCode: ACCT0000013435", //Test
+				"vendorCode: ACCT0000059919", //Live
 				"hash:" . $hashed
 			),
 		));

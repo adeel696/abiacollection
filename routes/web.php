@@ -21,6 +21,18 @@ Route::get('/abia_ussd', 'USSDController@index');
 
 Route::get('/upagent', 'UpdateAgentController@upAgent');
 
+Route::group(['prefix' => 'cs', 'middleware' => 'auth'], function() {
+	Route::get('/home', 'CS\HomeController@index');
+	
+	Route::get('/callcs', 'CS\PaymentController@CallCS');
+	
+	Route::get('/paymentatin/grid', 'CS\PaymentController@PaymentAtinGrid');
+	Route::get('/paymentatin', 'CS\PaymentController@getPaymentAtin');
+	
+	Route::get('/import', 'CS\PaymentController@getImportPaymentAtin');
+	Route::post('/importpaymentatin', 'CS\PaymentController@importPaymentAtin');
+});
+
 Route::group(['middleware' => ['auth']], function() {
 	Route::get('/home', 'HomeController@index');
 	

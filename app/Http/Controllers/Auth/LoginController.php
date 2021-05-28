@@ -30,8 +30,14 @@ class LoginController extends Controller
         // Attempt to log the user in
         if (Auth::attempt(['username' => $request->username, 'password' => $request->password]))
         {
-			//dd(Auth::user());
-            return redirect('/home');
+			if(Auth::User()->is_admin==1)
+			{
+            	return redirect('/home');
+			}
+			else
+			{
+				return redirect('/cs/home');
+			}
         }
 
         // if unsuccessful

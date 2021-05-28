@@ -26,7 +26,7 @@
  <div class="card">
     <input type="hidden" id="ajaxGUrl" value="{{url('/payment/grid')}}" />
     <div class="card-header">
-        <h2>Warehouse Detail</small></h2>
+        <h2>Payment Detail</small></h2>
         <div class="row">
         	<div class="col-md-4">
                 <div class="form-group">
