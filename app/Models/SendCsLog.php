@@ -12,4 +12,14 @@ class SendCsLog extends Model
 	// //timestamps
 	public $timestamps = false;
 	
+	public function ShopFee() 
+	{
+		return $this->belongsTo('App\Models\ShopFee' , 'shop_fees_id');
+	}
+	
+	public function PaymentAtin() 
+	{
+		return $this->belongsTo('App\Models\PaymentAtin' , 'payment_atin_id');
+	}
+	
 }

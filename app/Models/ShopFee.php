@@ -8,7 +8,7 @@ class ShopFee extends Model
 {
     protected $table = 'shop_fees';
 	// //primary key
-	public $primaryKey = 'msisdn';
+	public $primaryKey = 'id';
 	// //timestamps
 	public $timestamps = false;
 	

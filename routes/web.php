@@ -26,6 +26,9 @@ Route::group(['prefix' => 'cs', 'middleware' => 'auth'], function() {
 	
 	Route::get('/callcs', 'CS\PaymentController@CallCS');
 	
+	Route::get('/cslog/grid', 'CS\PaymentController@CSLogGrid');
+	Route::get('/cslog', 'CS\PaymentController@getCSLog');
+	
 	Route::get('/paymentatin/grid', 'CS\PaymentController@PaymentAtinGrid');
 	Route::get('/paymentatin', 'CS\PaymentController@getPaymentAtin');
 	
