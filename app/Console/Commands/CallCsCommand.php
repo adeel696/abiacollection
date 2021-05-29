@@ -1,25 +1,47 @@
 <?php
 
-namespace App\Http\Controllers\CS;
+namespace App\Console\Commands;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use DataTables;
+use Illuminate\Console\Command;
 use App\Models\PaymentAtin;
 use App\Models\SendCsLog;
 use App\Models\ShopFee;
 use App\Imports\PaymentAtinImport;
-use Maatwebsite\Excel\Facades\Excel;
-use Session;
-use Redirect;
-use DB;
+use Carbon\Carbon;
 
-class PaymentController extends Controller
+class CallCsCommand extends Command
 {
-	
-	public function CallCS()
-	{
-		$info_PaymentAtins = PaymentAtin::All()->Where('id','=','15112');
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'call:cs';
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Paymment ATIN Call CS';
+
+    /**
+     * Create a new command instance.
+     *
+     * @return void
+     */
+	public function __construct()
+    { 
+		parent::__construct();
+    }
+
+    /**
+     * Execute the console command.
+     *
+     * @return int
+     */
+    public function handle()
+    {
+		$info_PaymentAtins = PaymentAtin::All();//->Where('id','=','2');
 		$info_ShopFees = ShopFee::OrderBy('id')->Get();
 		foreach($info_PaymentAtins as $info_PaymentAtin)
 		{
@@ -95,73 +117,5 @@ class PaymentController extends Controller
 			$info_PaymentAtin->amount = $CurrentAmount;
 			$info_PaymentAtin->Save();
 		}
-		return 1;
-	}
-	
-	public function getImportPaymentAtin()
-	{
-		return view('cs.import');
-	}
-	
-	public function importPaymentAtin(Request $request)
-    {
-		$request->validate([
-            'payment_file' => 'required|file'
-        ]);
-		
-		$paymentAtinImport = new PaymentAtinImport;
-        Excel::import($paymentAtinImport,request()->file('payment_file'));
-		
-		if($paymentAtinImport->Error == "")
-		{
-			Session::flash('success_message', "File uploaded");
-        	return Redirect('cs/import');
-		}
-		else
-		{
-			Session::flash('error_message', $paymentAtinImport->Error);
-        	return Redirect('cs/import');
-		}
     }
-	
-	
-	public function getPaymentAtin()
-	{
-		return view('cs.paymentatin');
-	}
-	
-	public function PaymentAtinGrid()
-	{
-		$info_PaymentAtin = PaymentAtin::All();
-		
-	   	return DataTables::of($info_PaymentAtin)
-/*		->addColumn('edit', function ($info_Payment) {
-				 return '<div class="btn-group btn-group-action">
-								<a class="btn btn-info" style="margin-right:2px;" id="btnResend" href="javascript(0)" data-remote="'.url('/payment/recallibris/'.$info_Payment->id).'" title="Resend Data">Resend CS</a> 
-                                </div>';
-        })*/
-		->escapeColumns([])
-		->make(true);
-	}
-	
-	public function getCSLog()
-	{
-		return view('cs.cslog');
-	}
-	
-	public function CSLogGrid()
-	{
-		$info_SendCsLog = SendCsLog::All();
-		
-	   	return DataTables::of($info_SendCsLog)
-		->editColumn('payment_atin_id', function ($info_SendCsLog) {
-				 return $info_SendCsLog->PaymentAtin()->First()->atin;
-        })
-		->editColumn('shop_fees_id', function ($info_SendCsLog) {
-				 return $info_SendCsLog->ShopFee()->First()->revenue_name;
-        })
-		->escapeColumns([])
-		->make(true);
-	}
-	
 }
