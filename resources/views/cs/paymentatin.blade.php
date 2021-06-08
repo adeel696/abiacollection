@@ -33,6 +33,7 @@
             <tr>
                 <th>Payment ID</th>
                 <th>ATIN</th> 
+                <th>Mobile</th> 
                 <th>Amount</th>
                 <th>Store Name</th>
                 <th>Market Name</th>
@@ -59,6 +60,7 @@
     var columns = [
 			{ data: 'payment_id' },
 			{ data: 'atin' },
+			{ data: 'mobile_number' },
 			{ data: 'amount' },
 			{ data: 'store_name' },
 			{ data: 'market_name' },
@@ -69,3 +71,4 @@
 </script>
 
 @endpush
+

@@ -41,6 +41,8 @@ class CallCsCommand extends Command
      */
     public function handle()
     {
+		\Log::info("Call CS PaymentAtins");
+
 		$info_PaymentAtins = PaymentAtin::All();//->Where('id','=','2');
 		$info_ShopFees = ShopFee::OrderBy('id')->Get();
 		foreach($info_PaymentAtins as $info_PaymentAtin)
@@ -70,7 +72,7 @@ class CallCsCommand extends Command
 					$CurrentAmount = $CurrentAmount-$info_ShopFees[$i]->fixed_fee;
 					
 					
-					$data = '{"paymentGatewayProvider": "selfserve","paymentProviderNotificationLogId": "TBD","paymentProviderReferenceNumber": "'.$info_PaymentAtin->payment_id.'","paymentDate": '.(date("d-m-Y H:i:s")).',"paymentProviderCustomerName": "'.$info_PaymentAtin->store_name.'","paymentProviderCustomerPhoneNumber": "2349085465633","paymentProviderCustomerReference": "'.$info_PaymentAtin->atin.'","paymentProviderChannel": "ussd","totalAmountInKobo": '.((int)($info_ShopFees[$i]->fixed_fee)*100).',"paymentLineItem": [{"amountPaidInKobo": '.((int)($info_ShopFees[$i]->fixed_fee)*100).',"paymentAgencyCode": "20008001","paymentRevenueCode": "12010002"}],"taxPayerIdentificationNumber": "'.$info_PaymentAtin->atin.'","taxYear": "2021"}';
+					$data = '{"paymentGatewayProvider": "selfserve","paymentProviderNotificationLogId": "TBD","paymentProviderReferenceNumber": "'.$info_PaymentAtin->payment_id.'","paymentDate": '.(date("d-m-Y H:i:s")).',"paymentProviderCustomerName": "'.$info_PaymentAtin->store_name.'","paymentProviderCustomerPhoneNumber": "'.$info_PaymentAtin->mobile_number.'","paymentProviderCustomerReference": "'.$info_PaymentAtin->atin.'","paymentProviderChannel": "ussd","totalAmountInKobo": '.((int)($info_ShopFees[$i]->fixed_fee)*100).',"paymentLineItem": [{"amountPaidInKobo": '.((int)($info_ShopFees[$i]->fixed_fee)*100).',"paymentAgencyCode": "20008001","paymentRevenueCode": "12010002"}],"taxPayerIdentificationNumber": "'.$info_PaymentAtin->atin.'","taxYear": "2021"}';
 					\Log::info('IBRIS Payload: '.$data);
 					
 					//Test
@@ -111,6 +113,10 @@ class CallCsCommand extends Command
 						$db_SendCsLog->PaymentRetrivialReference = $responseData->body->paymentRetrievalReference;
 					$db_SendCsLog->save();
 					
+				}
+				else
+				{
+					break;
 				}
 			}
 			

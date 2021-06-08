@@ -32,6 +32,7 @@ class PaymentAtinImport implements ToCollection, WithHeadingRow
 					{
 						$db_PaymentAtin->payment_id = $row["payment_id"];
 						$db_PaymentAtin->atin = $row["atin"];
+						$db_PaymentAtin->mobile_number = $row["mobile_number"];
 						$db_PaymentAtin->amount = ($db_PaymentAtin->amount + floatval(str_replace(",","",$row["amount"])));
 						$db_PaymentAtin->store_name = $row["store_name"];
 						$db_PaymentAtin->market_name = $row["market_name"];
@@ -44,6 +45,7 @@ class PaymentAtinImport implements ToCollection, WithHeadingRow
 						$db_PaymentAtin = new PaymentAtin;
 						$db_PaymentAtin->payment_id = $row["payment_id"];
 						$db_PaymentAtin->atin = $row["atin"];
+						$db_PaymentAtin->mobile_number = $row["mobile_number"];
 						$db_PaymentAtin->amount = floatval(str_replace(",","",$row["amount"]));
 						$db_PaymentAtin->store_name = $row["store_name"];
 						$db_PaymentAtin->market_name = $row["market_name"];

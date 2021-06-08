@@ -273,7 +273,15 @@ class AgentController extends Controller
 		\Log::info('MonnifyCallback: '.$json);
 		\Log::info('Msisdn: '.'234'.substr($decodeData->product->reference,3));		
 		
-		$info_Agent = Agent::Where('account_reference','234'.substr($decodeData->product->reference,3))->First();
+		if(strlen($decodeData->product->reference) == "11")
+		{
+			$info_Agent = Agent::Where('account_reference','234'.substr($decodeData->product->reference,-10))->First();
+		}
+		else
+		{
+			$info_Agent = Agent::Where('account_reference','234'.substr($decodeData->product->reference,3))->First();
+		}
+		
 		$db_payment = new Payment;
 		$db_payment->userid = $info_Agent->id;
 		$db_payment->paymentref = $decodeData->paymentReference;
