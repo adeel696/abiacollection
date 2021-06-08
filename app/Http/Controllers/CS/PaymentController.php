@@ -48,7 +48,7 @@ class PaymentController extends Controller
 					$CurrentAmount = $CurrentAmount-$info_ShopFees[$i]->fixed_fee;
 					
 					
-					$data = '{"paymentGatewayProvider": "selfserve","paymentProviderNotificationLogId": "TBD","paymentProviderReferenceNumber": "'.$info_PaymentAtin->payment_id.'","paymentDate": '.(date("d-m-Y H:i:s")).',"paymentProviderCustomerName": "'.$info_PaymentAtin->store_name.'","paymentProviderCustomerPhoneNumber": "2349085465633","paymentProviderCustomerReference": "'.$info_PaymentAtin->atin.'","paymentProviderChannel": "ussd","totalAmountInKobo": '.((int)($info_ShopFees[$i]->fixed_fee)*100).',"paymentLineItem": [{"amountPaidInKobo": '.((int)($info_ShopFees[$i]->fixed_fee)*100).',"paymentAgencyCode": "20008001","paymentRevenueCode": "12010002"}],"taxPayerIdentificationNumber": "'.$info_PaymentAtin->atin.'","taxYear": "2021"}';
+					$data = '{"paymentGatewayProvider": "selfserve","paymentProviderNotificationLogId": "'.($db_SendCsLog->id*100000).($info_PaymentAtin->id*234567).'","paymentProviderReferenceNumber": "'.$info_PaymentAtin->payment_id.$i.'","paymentDate": "'.(date("d-m-Y H:i:s")).'","paymentProviderCustomerName": "'.$info_PaymentAtin->store_name.'","paymentProviderCustomerPhoneNumber": "'.$info_PaymentAtin->mobile_number.'","paymentProviderCustomerReference": "'.$info_PaymentAtin->atin.'","paymentProviderChannel": "ussd","totalAmountInKobo": '.((int)($info_ShopFees[$i]->fixed_fee)*100).',"paymentLineItem": [{"amountPaidInKobo": '.((int)($info_ShopFees[$i]->fixed_fee)*100).',"paymentAgencyCode": "20008001","paymentRevenueCode": "12010002"}],"taxPayerIdentificationNumber": "'.$info_PaymentAtin->atin.'","taxYear": "2021"}';
 					\Log::info('IBRIS Payload: '.$data);
 					
 					//Test
@@ -155,7 +155,8 @@ class PaymentController extends Controller
 		
 	   	return DataTables::of($info_SendCsLog)
 		->editColumn('payment_atin_id', function ($info_SendCsLog) {
-				 return $info_SendCsLog->PaymentAtin()->First()->atin;
+				 if($info_SendCsLog->PaymentAtin()->First() !== NULL)
+					 return $info_SendCsLog->PaymentAtin()->First()->atin;
         })
 		->editColumn('shop_fees_id', function ($info_SendCsLog) {
 				 return $info_SendCsLog->ShopFee()->First()->revenue_name;
