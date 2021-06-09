@@ -32,6 +32,7 @@
             <thead>
             <tr>
                 <th>Payment ID</th>
+                <th>Property ID</th>
                 <th>ATIN</th> 
                 <th>Mobile</th> 
                 <th>Amount</th>
@@ -59,6 +60,7 @@
 <script type="text/javascript">
     var columns = [
 			{ data: 'payment_id' },
+			{ data: 'property_id' },
 			{ data: 'atin' },
 			{ data: 'mobile_number' },
 			{ data: 'amount' },
